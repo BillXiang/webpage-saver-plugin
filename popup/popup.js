@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         browser.tabs.query({ active: true, currentWindow: true }).then(function (tabs) {
             const activeTab = tabs[0];
             const currentDate = new Date();
-            const timestamp = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(currentDate.getDate()).padStart(2, '0')}_${String(currentDate.getHours()).padStart(2, '0')}_${String(currentDate.getMinutes()).padStart(2, '0')}_${String(currentDate.getSeconds()).padStart(2, '0')}`;
+            const timestamp = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(currentDate.getDate()).padStart(2, '0')}_${String(currentDate.getHours()).padStart(2, '0')}：${String(currentDate.getMinutes()).padStart(2, '0')}：${String(currentDate.getSeconds()).padStart(2, '0')}`;
             const defaultFilename = `${activeTab.title.replace(/[\/:*?"<>|]/g, '_')}_${timestamp}.html`;
 
             filenameInput.value = defaultFilename;
