@@ -21,10 +21,9 @@
 
        .modal-content {
             background-color: #fefefe;
-            margin: 15% auto;
+            margin: 5% auto;
             padding: 20px;
             border: 1px solid #888;
-            width: 80%;
         }
 
        .close {
@@ -43,13 +42,14 @@
 
         /* 按钮样式 */
         button {
-            margin: 5px;
-            padding: 8px 16px;
+            margin: 10px;
+            padding: 20px 50px;
             background-color: #007BFF;
             color: white;
             border: none;
             border-radius: 4px;
             cursor: pointer;
+            width: 100%;
         }
 
         button:hover {
@@ -68,7 +68,7 @@
 </head>
 
 <body>
-    <button id="saveButton">Save Page</button>
+    <button id="saveButton">Save Page</button><br>
     <button id="configureGithubButton">Configure GitHub</button>
 
     <!-- 模态框 -->
@@ -103,7 +103,6 @@
             <button id="saveGithubConfigButton">Save Configuration</button>
         </div>
     </div>
-    <div id="progressStatus"></div>
     <script src="popup.js"></script>
 </body>
 

@@ -18,6 +18,37 @@ async function saveWebpage(tab, filename, githubConfig, saveTo) {
         const isPdf = tab.url.endsWith('.pdf');
 
         if (saveTo === 'github' && githubConfig && githubConfig.token && githubConfig.username && githubConfig.repo && githubConfig.branch) {
+            const tabs = await browser.tabs.query({ active: true, currentWindow: true });
+            const tabId = tab.id;
+            if (tabs.length > 0) {
+                console.log("progressDiv 开始上传到 GitHub...")
+                browser.tabs.executeScript(tabId, {
+                    code: `
+                        let progressDiv = document.getElementById('github-upload-progress');
+                        console.log('github-upload-progress:', progressDiv);
+                        if (!progressDiv) {
+                            progressDiv = document.createElement('div');
+                            progressDiv.id = 'github-upload-progress';
+                            progressDiv.style.position = 'fixed';
+                            progressDiv.style.top = '10px';
+                            progressDiv.style.left = '10px';
+                            progressDiv.style.backgroundColor = '#ffc107';
+                            progressDiv.style.padding = '10px';
+                            progressDiv.style.border = '1px solid #ccc';
+                            progressDiv.style.zIndex = '9999';
+                            progressDiv.textContent = '开始上传到 GitHub...';
+                        } else {
+                            progressDiv.textContent = '开始上传到 GitHub...';
+                        }
+                        document.body.appendChild(progressDiv);
+                        progressDiv.id;
+                    `
+                }).then(result => {
+                    console.log("executeScript success");
+                }).catch(error => {
+                    console.log("executeScript error:", error)
+                });;
+            }
             let content;
             if (isPdf) {
                 // 获取 PDF 文件的二进制数据
@@ -64,6 +95,20 @@ async function saveWebpage(tab, filename, githubConfig, saveTo) {
             });
             const data = await apiResponse.json();
             console.log('GitHub response:', data);
+            browser.tabs.executeScript(tabId, {
+                code: `
+                    console.log('github-upload-progress2');
+                    progressDiv = document.getElementById('github-upload-progress');
+                    console.log('github-upload-progress2:', progressDiv);
+                    if (progressDiv) {
+                        progressDiv.textContent = '${apiResponse && apiResponse.ok ? '上传到 GitHub 成功！' : '上传到 GitHub 失败，请检查配置和网络。'}';
+                    }
+                `
+            }).then(result => {
+                console.log("executeScript success");
+            }).catch(error => {
+                console.log("executeScript error:", error)
+            });
             return { success: apiResponse.ok };
         } else {
             const url = tab.url;

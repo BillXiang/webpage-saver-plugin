@@ -13,7 +13,6 @@ document.addEventListener('DOMContentLoaded', async function () {
     const githubRepoInput = document.getElementById('githubRepo');
     const githubBranchInput = document.getElementById('githubBranch');
     const saveOption = document.getElementById('saveOption');
-    const progressStatus = document.getElementById('progressStatus');
 
     // 从本地存储中获取之前的 GitHub 配置信息
     const { githubConfig } = await browser.storage.local.get('githubConfig');
@@ -65,17 +64,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             const saveTo = saveOption.value;
             // 保存本次选择的保存位置到本地存储
             await browser.storage.local.set({ lastSaveLocation: saveTo });
-            if (saveTo === 'github') {
-                progressStatus.textContent = '开始上传到 GitHub...';
-            }
-            browser.runtime.sendMessage({ action: 'savePage', filename: userInput, githubConfig, saveTo }, (response) => {
-                if (saveTo === 'github') {
-                    if (response && response.success) {
-                        progressStatus.textContent = '上传到 GitHub 成功！';
-                    } else {
-                        progressStatus.textContent = '上传到 GitHub 失败，请检查配置和网络。';
-                    }
-                }
+            browser.runtime.sendMessage({ action: 'savePage', filename: userInput, githubConfig, saveTo }, async (response) => {
             });
             modal.style.display = "none";
         }
