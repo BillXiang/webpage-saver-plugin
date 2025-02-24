@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     const githubUsernameInput = document.getElementById('githubUsername');
     const githubRepoInput = document.getElementById('githubRepo');
     const githubBranchInput = document.getElementById('githubBranch');
+    const saveOption = document.getElementById('saveOption');
 
     // 从本地存储中获取之前的 GitHub 配置信息
     const { githubConfig } = await browser.storage.local.get('githubConfig');
@@ -27,7 +28,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         browser.tabs.query({ active: true, currentWindow: true }).then(function (tabs) {
             const activeTab = tabs[0];
             const currentDate = new Date();
-            const timestamp = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(currentDate.getDate()).padStart(2, '0')}_${String(currentDate.getHours()).padStart(2, '0')}：${String(currentDate.getMinutes()).padStart(2, '0')}：${String(currentDate.getSeconds()).padStart(2, '0')}`;
+            const timestamp = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(currentDate.getDate()).padStart(2, '0')}_${String(currentDate.getHours()).padStart(2, '0')}-${String(currentDate.getMinutes()).padStart(2, '0')}-${String(currentDate.getSeconds()).padStart(2, '0')}`;
             const defaultFilename = `${activeTab.title.replace(/[\/:*?"<>|]/g, '_')}_${timestamp}.html`;
 
             filenameInput.value = defaultFilename;
@@ -50,7 +51,9 @@ document.addEventListener('DOMContentLoaded', async function () {
                 repo: githubRepoInput.value,
                 branch: githubBranchInput.value
             };
-            browser.runtime.sendMessage({ action: 'savePage', filename: userInput, githubConfig });
+            const saveTo = saveOption.value;
+            console.log(saveTo); 
+            browser.runtime.sendMessage({ action: 'savePage', filename: userInput, githubConfig, saveTo });
             modal.style.display = "none";
         }
     });
