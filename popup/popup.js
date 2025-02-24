@@ -24,25 +24,34 @@ document.addEventListener('DOMContentLoaded', async function () {
         githubBranchInput.value = githubConfig.branch;
     }
 
-    saveButton.addEventListener('click', function () {
-        browser.tabs.query({ active: true, currentWindow: true }).then(function (tabs) {
-            const activeTab = tabs[0];
-            const currentDate = new Date();
-            const timestamp = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(currentDate.getDate()).padStart(2, '0')}_${String(currentDate.getHours()).padStart(2, '0')}-${String(currentDate.getMinutes()).padStart(2, '0')}-${String(currentDate.getSeconds()).padStart(2, '0')}`;
-            const defaultFilename = `${activeTab.title.replace(/[\/:*?"<>|]/g, '_')}_${timestamp}.html`;
+    // 从本地存储中获取上次选择的保存位置
+    const { lastSaveLocation } = await browser.storage.local.get('lastSaveLocation');
+    if (lastSaveLocation) {
+        saveOption.value = lastSaveLocation;
+    }
 
-            filenameInput.value = defaultFilename;
+    // 生成文件名的函数，修改时间戳格式
+    function generateFilename(title) {
+        const currentDate = new Date();
+        const timestamp = `(${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(currentDate.getDate()).padStart(2, '0')} ${String(currentDate.getHours()).padStart(2, '0')}：${String(currentDate.getMinutes()).padStart(2, '0')}：${String(currentDate.getSeconds()).padStart(2, '0')})`;
+        return `${title.replace(/[\/:*?"<>|]/g, '_')}_${timestamp}.html`;
+    }
+
+    saveButton.addEventListener('click', async function () {
+        const tabs = await browser.tabs.query({ active: true, currentWindow: true });
+        if (tabs.length > 0) {
+            const activeTab = tabs[0];
+            const filename = generateFilename(activeTab.title);
+            filenameInput.value = filename;
             modal.style.display = "block";
-        }).catch(function (error) {
-            console.error('Tab query error:', error);
-        });
+        }
     });
 
     closeBtn.onclick = function () {
         modal.style.display = "none";
     }
 
-    confirmButton.addEventListener('click', function () {
+    confirmButton.addEventListener('click', async function () {
         const userInput = filenameInput.value;
         if (userInput) {
             const githubConfig = {
@@ -52,7 +61,8 @@ document.addEventListener('DOMContentLoaded', async function () {
                 branch: githubBranchInput.value
             };
             const saveTo = saveOption.value;
-            console.log(saveTo); 
+            // 保存本次选择的保存位置到本地存储
+            await browser.storage.local.set({ lastSaveLocation: saveTo });
             browser.runtime.sendMessage({ action: 'savePage', filename: userInput, githubConfig, saveTo });
             modal.style.display = "none";
         }
