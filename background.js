@@ -16,42 +16,66 @@ async function setSaveDirectory(directory) {
 }
 
 // 生成文件名，修改时间戳格式
-function generateFilename(title) {
+function generateFilename(title, isPdf = false) {
     const currentDate = new Date();
     const timestamp = `(${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(currentDate.getDate()).padStart(2, '0')} ${String(currentDate.getHours()).padStart(2, '0')}：${String(currentDate.getMinutes()).padStart(2, '0')}：${String(currentDate.getSeconds()).padStart(2, '0')})`;
-    return `${title.replace(/[\/:*?"<>|]/g, '_')}_${timestamp}.html`;
+    const fileExtension = isPdf ? '.pdf' : '.html';
+    return `${title.replace(/[\/:*?"<>|]/g, '_')}_${timestamp}${fileExtension}`;
 }
 
 // 保存网页到 GitHub 或本地
-async function saveWebpage(tab, githubConfig, saveTo) {
+async function saveWebpage(tab, filename, githubConfig, saveTo) {
     try {
         const saveDirectory = await getSaveDirectory();
-        const filename = generateFilename(tab.title);
+        const isPdf = tab.url.endsWith('.pdf');
 
         if (saveTo === 'github' && githubConfig && githubConfig.token && githubConfig.username && githubConfig.repo && githubConfig.branch) {
-            // 获取网页内容
-            const result = await browser.tabs.executeScript(tab.id, { code: 'document.documentElement.outerHTML' });
-            if (result && result.length > 0) {
-                const content = result[0];
-                const base64Content = btoa(unescape(encodeURIComponent(content)));
-                const apiUrl = `https://api.github.com/repos/${githubConfig.username}/${githubConfig.repo}/contents/${filename}`;
-                const headers = {
-                    'Authorization': `token ${githubConfig.token}`,
-                    'Content-Type': 'application/json'
-                };
-                const body = {
-                    message: `Save ${filename}`,
-                    content: base64Content,
-                    branch: githubConfig.branch
-                };
-                const apiResponse = await fetch(apiUrl, {
-                    method: 'PUT',
-                    headers: headers,
-                    body: JSON.stringify(body)
+            let content;
+            if (isPdf) {
+                // 获取 PDF 文件的二进制数据
+                const response = await fetch(tab.url);
+                const blob = await response.blob();
+                const reader = new FileReader();
+                await new Promise((resolve, reject) => {
+                    reader.onloadend = () => {
+                        const arrayBuffer = reader.result;
+                        const uint8Array = new Uint8Array(arrayBuffer);
+                        let binary = '';
+                        for (let i = 0; i < uint8Array.length; i++) {
+                            binary += String.fromCharCode(uint8Array[i]);
+                        }
+                        content = btoa(binary);
+                        resolve();
+                    };
+                    reader.onerror = reject;
+                    reader.readAsArrayBuffer(blob);
                 });
-                const data = await apiResponse.json();
-                console.log('GitHub response:', data);
+            } else {
+                // 获取网页内容
+                const result = await browser.tabs.executeScript(tab.id, { code: 'document.documentElement.outerHTML' });
+                if (result && result.length > 0) {
+                    content = result[0];
+                    content = btoa(unescape(encodeURIComponent(content)));
+                }
             }
+
+            const apiUrl = `https://api.github.com/repos/${githubConfig.username}/${githubConfig.repo}/contents/${filename}`;
+            const headers = {
+                'Authorization': `token ${githubConfig.token}`,
+                'Content-Type': 'application/json'
+            };
+            const body = {
+                message: `Save ${filename}`,
+                content: content,
+                branch: githubConfig.branch
+            };
+            const apiResponse = await fetch(apiUrl, {
+                method: 'PUT',
+                headers: headers,
+                body: JSON.stringify(body)
+            });
+            const data = await apiResponse.json();
+            console.log('GitHub response:', data);
         } else {
             const url = tab.url;
             const options = {
@@ -80,10 +104,26 @@ browser.bookmarks.onCreated.addListener(async (id, bookmark) => {
             const tabs = await browser.tabs.query({ url: bookmark.url });
             if (tabs.length > 0) {
                 const tab = tabs[0];
+                const isPdf = bookmark.url.endsWith('.pdf');
+                const defaultFilename = generateFilename(bookmark.title, isPdf);
+                let fullPath = '';
+                let parentId = bookmark.parentId;
+                const pathSegments = [];
+                while (parentId) {
+                    const parentBookmark = await browser.bookmarks.get(parentId);
+                    if (parentBookmark.length > 0 && parentBookmark[0].title) {
+                        pathSegments.unshift(parentBookmark[0].title.replace(/[\/:*?"<>|]/g, '_'));
+                    }
+                    parentId = parentBookmark[0].parentId;
+                }
+                fullPath = pathSegments.join('/');
+                const finalFilename = fullPath ? `${fullPath}/${defaultFilename}` : defaultFilename;
+
                 // 从本地存储中获取上次选择的保存位置
                 const { lastSaveLocation } = await browser.storage.local.get('lastSaveLocation');
-                const saveTo = lastSaveLocation || 'local'; // 如果没有记录，默认保存到本地
-                await saveWebpage(tab, githubConfig, saveTo);
+                const saveTo = lastSaveLocation || 'local';
+
+                await saveWebpage(tab, finalFilename, githubConfig, saveTo);
             }
         }
     } catch (error) {
@@ -96,7 +136,9 @@ browser.runtime.onMessage.addListener(async function (message, sender, sendRespo
         const tabs = await browser.tabs.query({ active: true, currentWindow: true });
         if (tabs.length > 0) {
             const activeTab = tabs[0];
-            await saveWebpage(activeTab, message.githubConfig, message.saveTo);
+            const isPdf = activeTab.url.endsWith('.pdf');
+            const filename = generateFilename(activeTab.title, isPdf);
+            await saveWebpage(activeTab, filename, message.githubConfig, message.saveTo);
         }
     } else if (message.action === 'setSaveDirectory') {
         browser.downloads.showDefaultFolder().then(() => {

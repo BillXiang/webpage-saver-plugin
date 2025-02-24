@@ -41,7 +41,13 @@ document.addEventListener('DOMContentLoaded', async function () {
         const tabs = await browser.tabs.query({ active: true, currentWindow: true });
         if (tabs.length > 0) {
             const activeTab = tabs[0];
-            const filename = generateFilename(activeTab.title);
+            let filename;
+            if (activeTab.url.endsWith('.pdf')) {
+                // 如果是 PDF 文件，修改文件名后缀为 .pdf
+                filename = generateFilename(activeTab.title).replace('.html', '.pdf');
+            } else {
+                filename = generateFilename(activeTab.title);
+            }
             filenameInput.value = filename;
             modal.style.display = "block";
         }
