@@ -4,17 +4,6 @@ async function getGithubConfig() {
     return githubConfig;
 }
 
-// 从本地存储中获取上次选择的保存目录
-async function getSaveDirectory() {
-    const { saveDirectory } = await browser.storage.local.get('saveDirectory');
-    return saveDirectory;
-}
-
-// 将保存目录保存到本地存储
-async function setSaveDirectory(directory) {
-    await browser.storage.local.set({ saveDirectory: directory });
-}
-
 // 生成文件名，修改时间戳格式
 function generateFilename(title, isPdf = false) {
     const currentDate = new Date();
@@ -26,7 +15,6 @@ function generateFilename(title, isPdf = false) {
 // 保存网页到 GitHub 或本地
 async function saveWebpage(tab, filename, githubConfig, saveTo) {
     try {
-        const saveDirectory = await getSaveDirectory();
         const isPdf = tab.url.endsWith('.pdf');
 
         if (saveTo === 'github' && githubConfig && githubConfig.token && githubConfig.username && githubConfig.repo && githubConfig.branch) {
@@ -76,22 +64,21 @@ async function saveWebpage(tab, filename, githubConfig, saveTo) {
             });
             const data = await apiResponse.json();
             console.log('GitHub response:', data);
+            return { success: apiResponse.ok };
         } else {
             const url = tab.url;
             const options = {
                 url: url,
-                saveAs: false
+                saveAs: false,
+                filename: filename
             };
-            if (saveDirectory) {
-                options.filename = `${saveDirectory}/${filename}`;
-            } else {
-                options.filename = filename;
-            }
             const downloadId = await browser.downloads.download(options);
             console.log('Download started with ID:', downloadId);
+            return { success: true };
         }
     } catch (error) {
         console.error('Error saving webpage:', error);
+        return { success: false };
     }
 }
 
@@ -136,20 +123,9 @@ browser.runtime.onMessage.addListener(async function (message, sender, sendRespo
         const tabs = await browser.tabs.query({ active: true, currentWindow: true });
         if (tabs.length > 0) {
             const activeTab = tabs[0];
-            const isPdf = activeTab.url.endsWith('.pdf');
-            const filename = generateFilename(activeTab.title, isPdf);
-            await saveWebpage(activeTab, filename, message.githubConfig, message.saveTo);
+            const result = await saveWebpage(activeTab, message.filename, message.githubConfig, message.saveTo);
+            sendResponse(result);
+            return true;
         }
-    } else if (message.action === 'setSaveDirectory') {
-        browser.downloads.showDefaultFolder().then(() => {
-            browser.downloads.setShelfEnabled(false);
-            browser.downloads.onDeterminingFilename.addListener(async function (item, suggest) {
-                const saveDirectory = item.filename.split('/').slice(0, -1).join('/');
-                await setSaveDirectory(saveDirectory);
-                suggest({ filename: item.filename });
-                browser.downloads.setShelfEnabled(true);
-                return true;
-            });
-        });
     }
 });

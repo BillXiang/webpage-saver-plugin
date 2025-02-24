@@ -1,6 +1,5 @@
 document.addEventListener('DOMContentLoaded', async function () {
     const saveButton = document.getElementById('saveButton');
-    const setDirectoryButton = document.getElementById('setDirectoryButton');
     const configureGithubButton = document.getElementById('configureGithubButton');
     const modal = document.getElementById('myModal');
     const closeBtn = document.getElementsByClassName('close')[0];
@@ -14,6 +13,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     const githubRepoInput = document.getElementById('githubRepo');
     const githubBranchInput = document.getElementById('githubBranch');
     const saveOption = document.getElementById('saveOption');
+    const progressStatus = document.getElementById('progressStatus');
 
     // 从本地存储中获取之前的 GitHub 配置信息
     const { githubConfig } = await browser.storage.local.get('githubConfig');
@@ -31,23 +31,19 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
 
     // 生成文件名的函数，修改时间戳格式
-    function generateFilename(title) {
+    function generateFilename(title, isPdf = false) {
         const currentDate = new Date();
         const timestamp = `(${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(currentDate.getDate()).padStart(2, '0')} ${String(currentDate.getHours()).padStart(2, '0')}：${String(currentDate.getMinutes()).padStart(2, '0')}：${String(currentDate.getSeconds()).padStart(2, '0')})`;
-        return `${title.replace(/[\/:*?"<>|]/g, '_')}_${timestamp}.html`;
+        const fileExtension = isPdf ? '.pdf' : '.html';
+        return `${title.replace(/[\/:*?"<>|]/g, '_')}_${timestamp}${fileExtension}`;
     }
 
     saveButton.addEventListener('click', async function () {
         const tabs = await browser.tabs.query({ active: true, currentWindow: true });
         if (tabs.length > 0) {
             const activeTab = tabs[0];
-            let filename;
-            if (activeTab.url.endsWith('.pdf')) {
-                // 如果是 PDF 文件，修改文件名后缀为 .pdf
-                filename = generateFilename(activeTab.title).replace('.html', '.pdf');
-            } else {
-                filename = generateFilename(activeTab.title);
-            }
+            const isPdf = activeTab.url.endsWith('.pdf');
+            const filename = generateFilename(activeTab.title, isPdf);
             filenameInput.value = filename;
             modal.style.display = "block";
         }
@@ -69,13 +65,20 @@ document.addEventListener('DOMContentLoaded', async function () {
             const saveTo = saveOption.value;
             // 保存本次选择的保存位置到本地存储
             await browser.storage.local.set({ lastSaveLocation: saveTo });
-            browser.runtime.sendMessage({ action: 'savePage', filename: userInput, githubConfig, saveTo });
+            if (saveTo === 'github') {
+                progressStatus.textContent = '开始上传到 GitHub...';
+            }
+            browser.runtime.sendMessage({ action: 'savePage', filename: userInput, githubConfig, saveTo }, (response) => {
+                if (saveTo === 'github') {
+                    if (response && response.success) {
+                        progressStatus.textContent = '上传到 GitHub 成功！';
+                    } else {
+                        progressStatus.textContent = '上传到 GitHub 失败，请检查配置和网络。';
+                    }
+                }
+            });
             modal.style.display = "none";
         }
-    });
-
-    setDirectoryButton.addEventListener('click', function () {
-        browser.runtime.sendMessage({ action: 'setSaveDirectory' });
     });
 
     configureGithubButton.addEventListener('click', function () {

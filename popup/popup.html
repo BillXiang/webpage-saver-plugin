@@ -4,10 +4,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="popup.css">
-    <title>Webpage Saver</title>
+    <title>Save Webpage</title>
     <style>
-       .modal {
+        /* 模态框样式 */
+        .modal {
             display: none;
             position: fixed;
             z-index: 1;
@@ -25,7 +25,6 @@
             padding: 20px;
             border: 1px solid #888;
             width: 80%;
-            max-width: 600px;
         }
 
        .close {
@@ -41,21 +40,45 @@
             text-decoration: none;
             cursor: pointer;
         }
+
+        /* 按钮样式 */
+        button {
+            margin: 5px;
+            padding: 8px 16px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        /* 输入框和选择框样式 */
+        input[type="text"],
+        select {
+            margin: 5px;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
     </style>
 </head>
 
 <body>
-    <button id="saveButton">Save Current Page</button>
-    <button id="setDirectoryButton">Set Save Directory</button>
+    <button id="saveButton">Save Page</button>
     <button id="configureGithubButton">Configure GitHub</button>
 
     <!-- 模态框 -->
     <div id="myModal" class="modal">
         <div class="modal-content">
             <span class="close">&times;</span>
-            <h2>Confirm File Name</h2>
-            <input type="text" id="filenameInput" style="width: 100%;">
-            <label for="saveOption">Save to:</label>
+            <h2>Save Page</h2>
+            <label for="filenameInput">Filename:</label>
+            <input type="text" id="filenameInput" readonly>
+            <label for="saveOption">Save To:</label>
             <select id="saveOption">
                 <option value="local">Local</option>
                 <option value="github">GitHub</option>
@@ -67,20 +90,20 @@
     <!-- GitHub 配置模态框 -->
     <div id="githubConfigModal" class="modal">
         <div class="modal-content">
-            <span class="close" id="closeGithubConfig">&times;</span>
+            <span id="closeGithubConfig">&times;</span>
             <h2>GitHub Configuration</h2>
-            <label for="githubToken">Access Token:</label>
-            <input type="text" id="githubToken" style="width: 100%;"><br>
-            <label for="githubUsername">Username:</label>
-            <input type="text" id="githubUsername" style="width: 100%;"><br>
-            <label for="githubRepo">Repository Name:</label>
-            <input type="text" id="githubRepo" style="width: 100%;"><br>
-            <label for="githubBranch">Branch Name:</label>
-            <input type="text" id="githubBranch" style="width: 100%;"><br>
+            <label for="githubToken">GitHub Token:</label>
+            <input type="text" id="githubToken">
+            <label for="githubUsername">GitHub Username:</label>
+            <input type="text" id="githubUsername">
+            <label for="githubRepo">GitHub Repository:</label>
+            <input type="text" id="githubRepo">
+            <label for="githubBranch">GitHub Branch:</label>
+            <input type="text" id="githubBranch">
             <button id="saveGithubConfigButton">Save Configuration</button>
         </div>
     </div>
-
+    <div id="progressStatus"></div>
     <script src="popup.js"></script>
 </body>
 
