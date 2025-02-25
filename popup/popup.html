@@ -52,6 +52,17 @@
             width: 100%;
         }
 
+        select {
+            margin: 10px;
+            padding: 10px 50px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+        }
+
         button:hover {
             background-color: #0056b3;
         }
@@ -69,7 +80,12 @@
 
 <body>
     <button id="saveButton">Save Page</button><br>
-    <button id="configureGithubButton">Configure GitHub</button>
+    <button id="configureGithubButton">Configure GitHub</button><br>
+    <label for="saveOption">Save To:</label>
+    <select id="saveOption">
+        <option value="local">Local</option>
+        <option value="github">GitHub</option>
+    </select>
 
     <!-- 模态框 -->
     <div id="myModal" class="modal">
@@ -78,11 +94,6 @@
             <h2>Save Page</h2>
             <label for="filenameInput">Filename:</label>
             <input type="text" id="filenameInput" readonly>
-            <label for="saveOption">Save To:</label>
-            <select id="saveOption">
-                <option value="local">Local</option>
-                <option value="github">GitHub</option>
-            </select>
             <button id="confirmButton">Confirm</button>
         </div>
     </div>

@@ -52,6 +52,13 @@ document.addEventListener('DOMContentLoaded', async function () {
         modal.style.display = "none";
     }
 
+    // 为 select 元素添加 change 事件监听器
+    saveOption.addEventListener('change', async function () {
+        const saveTo = saveOption.value;
+        // 保存本次选择的保存位置到本地存储
+        await browser.storage.local.set({ lastSaveLocation: saveTo });
+    });
+
     confirmButton.addEventListener('click', async function () {
         const userInput = filenameInput.value;
         if (userInput) {
@@ -62,8 +69,6 @@ document.addEventListener('DOMContentLoaded', async function () {
                 branch: githubBranchInput.value
             };
             const saveTo = saveOption.value;
-            // 保存本次选择的保存位置到本地存储
-            await browser.storage.local.set({ lastSaveLocation: saveTo });
             browser.runtime.sendMessage({ action: 'savePage', filename: userInput, githubConfig, saveTo }, async (response) => {
             });
             modal.style.display = "none";
