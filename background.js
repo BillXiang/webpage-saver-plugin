@@ -18,10 +18,35 @@ async function saveWebpage(tab, filename, githubConfig, saveTo) {
         const isPdf = tab.url.endsWith('.pdf');
 
         if (saveTo === 'github' && githubConfig && githubConfig.token && githubConfig.username && githubConfig.repo && githubConfig.branch) {
-            const tabs = await browser.tabs.query({ active: true, currentWindow: true });
             const tabId = tab.id;
-            if (tabs.length > 0) {
-                console.log("progressDiv 开始上传到 GitHub...")
+            console.log("progressDiv 开始上传到 GitHub...")
+               
+            let content;
+            if (isPdf) {
+                browser.notifications.create({
+                    type: 'basic',
+                    title: 'PDF save progress',
+                    message: 'Start'
+                });
+                // 获取 PDF 文件的二进制数据
+                const response = await fetch(tab.url);
+                const blob = await response.blob();
+                const reader = new FileReader();
+                await new Promise((resolve, reject) => {
+                    reader.onloadend = () => {
+                        const arrayBuffer = reader.result;
+                        const uint8Array = new Uint8Array(arrayBuffer);
+                        let binary = '';
+                        for (let i = 0; i < uint8Array.length; i++) {
+                            binary += String.fromCharCode(uint8Array[i]);
+                        }
+                        content = btoa(binary);
+                        resolve();
+                    };
+                    reader.onerror = reject;
+                    reader.readAsArrayBuffer(blob);
+                });
+            } else {
                 browser.tabs.executeScript(tabId, {
                     code: `
                         let progressDiv = document.getElementById('github-upload-progress');
@@ -47,29 +72,7 @@ async function saveWebpage(tab, filename, githubConfig, saveTo) {
                     console.log("executeScript success");
                 }).catch(error => {
                     console.log("executeScript error:", error)
-                });;
-            }
-            let content;
-            if (isPdf) {
-                // 获取 PDF 文件的二进制数据
-                const response = await fetch(tab.url);
-                const blob = await response.blob();
-                const reader = new FileReader();
-                await new Promise((resolve, reject) => {
-                    reader.onloadend = () => {
-                        const arrayBuffer = reader.result;
-                        const uint8Array = new Uint8Array(arrayBuffer);
-                        let binary = '';
-                        for (let i = 0; i < uint8Array.length; i++) {
-                            binary += String.fromCharCode(uint8Array[i]);
-                        }
-                        content = btoa(binary);
-                        resolve();
-                    };
-                    reader.onerror = reject;
-                    reader.readAsArrayBuffer(blob);
                 });
-            } else {
                 // 获取网页内容
                 const result = await browser.tabs.executeScript(tab.id, { code: 'document.documentElement.outerHTML' });
                 if (result && result.length > 0) {
@@ -95,20 +98,28 @@ async function saveWebpage(tab, filename, githubConfig, saveTo) {
             });
             const data = await apiResponse.json();
             console.log('GitHub response:', data);
-            browser.tabs.executeScript(tabId, {
-                code: `
-                    console.log('github-upload-progress2');
-                    progressDiv = document.getElementById('github-upload-progress');
-                    console.log('github-upload-progress2:', progressDiv);
-                    if (progressDiv) {
-                        progressDiv.textContent = '${apiResponse && apiResponse.ok ? '上传到 GitHub 成功！' : '上传到 GitHub 失败，请检查配置和网络。'}';
-                    }
-                `
-            }).then(result => {
-                console.log("executeScript success");
-            }).catch(error => {
-                console.log("executeScript error:", error)
-            });
+            if (isPdf) {
+                browser.notifications.create({
+                    type: 'basic',
+                    title: 'PDF save progress',
+                    message: 'Success'
+                });
+            } else {
+                browser.tabs.executeScript(tabId, {
+                    code: `
+                        console.log('github-upload-progress2');
+                        progressDiv = document.getElementById('github-upload-progress');
+                        console.log('github-upload-progress2:', progressDiv);
+                        if (progressDiv) {
+                            progressDiv.textContent = '${apiResponse && apiResponse.ok ? '上传到 GitHub 成功！' : '上传到 GitHub 失败，请检查配置和网络。'}';
+                        }
+                    `
+                }).then(result => {
+                    console.log("executeScript success");
+                }).catch(error => {
+                    console.log("executeScript error:", error)
+                });
+            }
             return { success: apiResponse.ok };
         } else {
             const url = tab.url;

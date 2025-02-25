@@ -14,9 +14,11 @@
     "permissions": [
         "activeTab",
         "downloads",
+        "<all_urls>",
         "storage",
         "bookmarks",
-        "tabs"
+        "tabs",
+        "notifications"
     ],
     "background": {
         "scripts": ["background.js"]
