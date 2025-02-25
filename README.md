@@ -2,6 +2,8 @@
 
 # 火狐浏览器插件开发：网页保存至本地及 GitHub 仓库
 
+https://addons.mozilla.org/zh-CN/firefox/addon/webpage-saver/
+
 ## 目录
 1. [项目概述](#项目概述)
 2. [项目结构](#项目结构)
