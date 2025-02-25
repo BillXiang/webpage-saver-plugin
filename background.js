@@ -9,7 +9,7 @@ function generateFilename(title, isPdf = false) {
     const currentDate = new Date();
     const timestamp = `(${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(currentDate.getDate()).padStart(2, '0')} ${String(currentDate.getHours()).padStart(2, '0')}：${String(currentDate.getMinutes()).padStart(2, '0')}：${String(currentDate.getSeconds()).padStart(2, '0')})`;
     const fileExtension = isPdf ? '.pdf' : '.html';
-    return `${title.replace(/[\/:*?"<>|]/g, '_')}_${timestamp}${fileExtension}`;
+    return `${title.replace(/[\/:*?"<>|]/g, '_')} ${timestamp}${fileExtension}`;
 }
 
 // 保存网页到 GitHub 或本地
@@ -47,6 +47,21 @@ async function saveWebpage(tab, filename, githubConfig, saveTo) {
                     reader.readAsArrayBuffer(blob);
                 });
             } else {
+                // 获取网页内容
+                const result = await browser.tabs.executeScript(tab.id, { code: 'document.documentElement.outerHTML' });
+                if (result && result.length > 0) {
+                    content = result[0];
+                    content = btoa(unescape(encodeURIComponent(content)));
+                }
+                // 创建一个注释节点
+                const comment = document.createComment(`
+                    filename: ${filename}
+                    作者: 通过 JavaScript 添加注释
+                    创建时间: 2025 年 2 月 25 日
+                    文件用途: 演示如何在 HTML 头部添加注释信息。
+                `);
+                document.insertBefore(comment, document.head.firstChild);
+
                 browser.tabs.executeScript(tabId, {
                     code: `
                         let progressDiv = document.getElementById('github-upload-progress');
@@ -73,12 +88,6 @@ async function saveWebpage(tab, filename, githubConfig, saveTo) {
                 }).catch(error => {
                     console.log("executeScript error:", error)
                 });
-                // 获取网页内容
-                const result = await browser.tabs.executeScript(tab.id, { code: 'document.documentElement.outerHTML' });
-                if (result && result.length > 0) {
-                    content = result[0];
-                    content = btoa(unescape(encodeURIComponent(content)));
-                }
             }
 
             const apiUrl = `https://api.github.com/repos/${githubConfig.username}/${githubConfig.repo}/contents/${filename}`;
