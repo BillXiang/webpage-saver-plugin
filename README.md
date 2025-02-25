@@ -1,4 +1,5 @@
-# webpage-saver-plugin
+# x-webpage-conserve
+
 # 火狐浏览器插件开发：网页保存至本地及 GitHub 仓库
 
 ## 目录
@@ -24,7 +25,7 @@
 
 ## 项目结构
 ```
-webpage - saver - plugin/
+x-webpage-conserve/
 ├── manifest.json
 ├── popup/
 │   ├── popup.html
