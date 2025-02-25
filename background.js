@@ -50,17 +50,9 @@ async function saveWebpage(tab, filename, githubConfig, saveTo) {
                 // 获取网页内容
                 const result = await browser.tabs.executeScript(tab.id, { code: 'document.documentElement.outerHTML' });
                 if (result && result.length > 0) {
-                    content = result[0];
+                    content = `<!--filename: ${filename}\n Page saved with X-Webpage-Conserve \n url: ${tab.url}\n-->\n`+result[0];
                     content = btoa(unescape(encodeURIComponent(content)));
                 }
-                // 创建一个注释节点
-                const comment = document.createComment(`
-                    filename: ${filename}
-                    作者: 通过 JavaScript 添加注释
-                    创建时间: 2025 年 2 月 25 日
-                    文件用途: 演示如何在 HTML 头部添加注释信息。
-                `);
-                document.insertBefore(comment, document.head.firstChild);
 
                 browser.tabs.executeScript(tabId, {
                     code: `
