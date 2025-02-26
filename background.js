@@ -9,7 +9,7 @@ function generateFilename(title, isPdf = false) {
     const currentDate = new Date();
     const timestamp = `(${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(currentDate.getDate()).padStart(2, '0')} ${String(currentDate.getHours()).padStart(2, '0')}：${String(currentDate.getMinutes()).padStart(2, '0')}：${String(currentDate.getSeconds()).padStart(2, '0')})`;
     const fileExtension = isPdf ? '.pdf' : '.html';
-    return `${title.replace(/[\/:*?"<>|]/g, '_')} ${timestamp}${fileExtension}`;
+    return `${title.replace(/[\/:*?"<>|]()/g, '_')} ${timestamp}${fileExtension}`;
 }
 
 // 保存网页到 GitHub 或本地
@@ -45,7 +45,7 @@ async function saveWebpage(tab, filename, githubConfig, saveTo) {
             console.log(shadowContent);
             let headInfo = `<!-- Filename: ${filename}\n Page saved with X-Webpage-Conserve \n url: ${tab.url}\n`;
             if (shadowContent) {
-                headInfo += ` Summary: ${shadowContent} (by Mozilla Orbit AI)\n-->\n`
+                headInfo += ` Summary: ${shadowContent}\n-->\n`
             } else {
                 headInfo += ' Summary: \n-->\n'
             }
