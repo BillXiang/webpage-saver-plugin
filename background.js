@@ -16,12 +16,46 @@ function generateFilename(title, isPdf = false) {
 async function saveWebpage(tab, filename, githubConfig, saveTo) {
     try {
         const isPdf = tab.url.endsWith('.pdf');
+        const tabId = tab.id;
+        let content;
+        if (!isPdf) {
+            // 获取网页内容
+           const result = await browser.tabs.executeScript(tabId, { code: 'document.documentElement.outerHTML' });
+           const shadowContent = await browser.tabs.executeScript(tabId, { code: `
+                // 获取Shadow宿主元素
+                const orbitElement = document.querySelector('orbit-wrapper');
+                
+                if (orbitElement && orbitElement.shadowRoot) {
+                    const shadowRoot = orbitElement.shadowRoot;
+                    const shadowContent = shadowRoot.innerHTML; // 获取Shadow DOM内容
+                    // 创建一个临时的 div 元素
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = shadowContent;
+
+                    // 在临时 div 中查找特定元素
+                    const targetParagraph = tempDiv.getElementsByClassName('orbit-chat-answer');
+                    if (targetParagraph[0]) {
+                        //console.log('Found target paragraph:', targetParagraph[0].textContent);
+                        targetParagraph[0].textContent;
+                    } else {
+                        console.log('Target paragraph not found.');
+                    }
+                }
+            `});
+            console.log(shadowContent);
+            let headInfo = `<!-- Filename: ${filename}\n Page saved with X-Webpage-Conserve \n url: ${tab.url}\n`;
+            if (shadowContent) {
+                headInfo += ` Summary: ${shadowContent} (by Mozilla Orbit AI)\n-->\n`
+            } else {
+                headInfo += ' Summary: \n-->\n'
+            }
+            if (result && result.length > 0) {
+                content = headInfo + result[0];
+            }
+        }
 
         if (saveTo === 'github' && githubConfig && githubConfig.token && githubConfig.username && githubConfig.repo && githubConfig.branch) {
-            const tabId = tab.id;
             console.log("progressDiv 开始上传到 GitHub...")
-               
-            let content;
             if (isPdf) {
                 browser.notifications.create({
                     type: 'basic',
@@ -47,13 +81,8 @@ async function saveWebpage(tab, filename, githubConfig, saveTo) {
                     reader.readAsArrayBuffer(blob);
                 });
             } else {
-                // 获取网页内容
-                const result = await browser.tabs.executeScript(tab.id, { code: 'document.documentElement.outerHTML' });
-                if (result && result.length > 0) {
-                    content = `<!--filename: ${filename}\n Page saved with X-Webpage-Conserve \n url: ${tab.url}\n-->\n`+result[0];
-                    content = btoa(unescape(encodeURIComponent(content)));
-                }
-
+                content = btoa(unescape(encodeURIComponent(content)));
+                //show upload progress
                 browser.tabs.executeScript(tabId, {
                     code: `
                         let progressDiv = document.getElementById('github-upload-progress');
@@ -122,16 +151,32 @@ async function saveWebpage(tab, filename, githubConfig, saveTo) {
                 });
             }
             return { success: apiResponse.ok };
-        } else {
-            const url = tab.url;
-            const options = {
-                url: url,
-                saveAs: false,
-                filename: filename
-            };
-            const downloadId = await browser.downloads.download(options);
-            console.log('Download started with ID:', downloadId);
-            return { success: true };
+        } else {//saveTo === 'local'
+            if (isPdf) {
+                const url = tab.url;
+                const options = {
+                    url: url,
+                    saveAs: false,
+                    filename: filename
+                };
+                const downloadId = await browser.downloads.download(options);
+                console.log('Download started with ID:', downloadId);
+                return { success: true };
+            } else {// download content with head info
+                // 将数据转换为Blob对象
+                var blob = new Blob([content], { type: 'text/html' });
+                // 创建一个指向该Blob的URL
+                var url = window.URL.createObjectURL(blob);
+                // 创建一个a元素用于下载
+                var downloadLink = document.createElement('a');
+                // 设置下载属性和文件名
+                downloadLink.href = url;
+                downloadLink.download = filename;
+                // 触发下载
+                downloadLink.click();
+                // 释放创建的URL
+                window.URL.revokeObjectURL(url);
+            }
         }
     } catch (error) {
         console.error('Error saving webpage:', error);
