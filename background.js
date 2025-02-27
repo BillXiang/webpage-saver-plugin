@@ -190,7 +190,7 @@ browser.bookmarks.onCreated.addListener(async (id, bookmark) => {
         console.log('Bookmark created:', bookmark);
         if (bookmark.url) {
             const githubConfig = await getGithubConfig();
-            const tabs = await browser.tabs.query({ url: bookmark.url });
+            const tabs = await browser.tabs.query({ active: true, currentWindow: true });
             if (tabs.length > 0) {
                 const tab = tabs[0];
                 const isPdf = bookmark.url.endsWith('.pdf');
