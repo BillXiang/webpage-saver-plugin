@@ -24,7 +24,7 @@
         "scripts": [
             "github.js", 
             "filename.js", 
-            "list.js", 
+            "savepage.js",
             "summary.js",
             "background.js"]
     }
