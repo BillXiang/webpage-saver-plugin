@@ -1,7 +1,7 @@
 {
     "manifest_version": 2,
     "name": "X-Webpage-Conserve",
-    "version": "1.2",
+    "version": "1.3",
     "description": "Save the current web page as a single HTML file and set the save directory.",
     "browser_action": {
         "default_icon": {
