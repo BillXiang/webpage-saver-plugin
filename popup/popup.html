@@ -42,25 +42,30 @@
 
         /* 按钮样式 */
         button {
-            margin: 10px;
+            margin-top: 10px;
+            margin-left: 20px;
+            margin-right: 20px;
             padding: 20px 50px;
             background-color: #007BFF;
             color: white;
             border: none;
             border-radius: 4px;
             cursor: pointer;
-            width: 100%;
+            width: calc(100% - 40px);
         }
 
         select {
-            margin: 10px;
-            padding: 10px 50px;
+            margin-top: 10px;
+            margin-bottom: 10px;
+            margin-left: 20px;
+            margin-right: 20px;
+            padding: 20px 50px;
             background-color: #007BFF;
             color: white;
             border: none;
             border-radius: 4px;
             cursor: pointer;
-            width: 100%;
+            width: calc(100% - 40px);
         }
 
         button:hover {
@@ -70,7 +75,6 @@
         /* 输入框和选择框样式 */
         input[type="text"],
         select {
-            margin: 5px;
             padding: 8px;
             border: 1px solid #ccc;
             border-radius: 4px;
@@ -81,11 +85,11 @@
 <body>
     <button id="saveButton">Save Page</button><br>
     <button id="configureGithubButton">Configure GitHub</button><br>
-    <label for="saveOption">Save To:</label>
     <select id="saveOption">
-        <option value="local">Local</option>
-        <option value="github">GitHub</option>
-    </select>
+        <option value="local">Save To Local</option>
+        <option value="github">Save To GitHub</option>
+    </select><br>
+    <button id="openPageButton">GitHub Upload List</button>
 
     <!-- 模态框 -->
     <div id="myModal" class="modal">
@@ -104,13 +108,13 @@
             <span id="closeGithubConfig">&times;</span>
             <h2>GitHub Configuration</h2>
             <label for="githubToken">GitHub Token:</label>
-            <input type="text" id="githubToken">
+            <input type="text" id="githubToken"><br>
             <label for="githubUsername">GitHub Username:</label>
-            <input type="text" id="githubUsername">
+            <input type="text" id="githubUsername"><br>
             <label for="githubRepo">GitHub Repository:</label>
-            <input type="text" id="githubRepo">
+            <input type="text" id="githubRepo"><br>
             <label for="githubBranch">GitHub Branch:</label>
-            <input type="text" id="githubBranch">
+            <input type="text" id="githubBranch"><br>
             <button id="saveGithubConfigButton">Save Configuration</button>
         </div>
     </div>

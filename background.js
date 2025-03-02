@@ -1,17 +1,3 @@
-// 从本地存储中获取之前保存的 GitHub 配置信息
-async function getGithubConfig() {
-    const { githubConfig } = await browser.storage.local.get('githubConfig');
-    return githubConfig;
-}
-
-// 生成文件名，修改时间戳格式
-function generateFilename(title, isPdf = false) {
-    const currentDate = new Date();
-    const timestamp = `(${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(currentDate.getDate()).padStart(2, '0')} ${String(currentDate.getHours()).padStart(2, '0')}：${String(currentDate.getMinutes()).padStart(2, '0')}：${String(currentDate.getSeconds()).padStart(2, '0')})`;
-    const fileExtension = isPdf ? '.pdf' : '.html';
-    return `${ title.replace(/[\/:*?"<>|]()/g, '_').substring(0, 126)} ${timestamp}${fileExtension}`;
-}
-
 // 保存网页到 GitHub 或本地
 async function saveWebpage(tab, filename, githubConfig, saveTo) {
     try {
@@ -20,32 +6,12 @@ async function saveWebpage(tab, filename, githubConfig, saveTo) {
         let content;
         if (!isPdf) {
             // 获取网页内容
-           const result = await browser.tabs.executeScript(tabId, { code: 'document.documentElement.outerHTML' });
-           const shadowContent = await browser.tabs.executeScript(tabId, { code: `
-                // 获取Shadow宿主元素
-                const orbitElement = document.querySelector('orbit-wrapper');
-                
-                if (orbitElement && orbitElement.shadowRoot) {
-                    const shadowRoot = orbitElement.shadowRoot;
-                    const shadowContent = shadowRoot.innerHTML; // 获取Shadow DOM内容
-                    // 创建一个临时的 div 元素
-                    const tempDiv = document.createElement('div');
-                    tempDiv.innerHTML = shadowContent;
-
-                    // 在临时 div 中查找特定元素
-                    const targetParagraph = tempDiv.getElementsByClassName('orbit-chat-answer');
-                    if (targetParagraph[0]) {
-                        //console.log('Found target paragraph:', targetParagraph[0].textContent);
-                        targetParagraph[0].textContent;
-                    } else {
-                        console.log('Target paragraph not found.');
-                    }
-                }
-            `});
-            console.log(shadowContent);
+            const result = await browser.tabs.executeScript(tabId, { code: 'document.documentElement.outerHTML' });
+            const summary = await getSummary(browser, tabId);
+            console.log(summary);
             let headInfo = `<!-- Filename: ${filename}\n Page saved with X-Webpage-Conserve \n url: ${tab.url}\n`;
-            if (shadowContent) {
-                headInfo += ` Summary: ${shadowContent}\n-->\n`
+            if (summary) {
+                headInfo += ` Summary: ${summary}\n-->\n`
             } else {
                 headInfo += ' Summary: \n-->\n'
             }
@@ -59,7 +25,7 @@ async function saveWebpage(tab, filename, githubConfig, saveTo) {
             if (isPdf) {
                 browser.notifications.create({
                     type: 'basic',
-                    title: 'PDF save progress',
+                    title: `PDF ${filename} save progress`,
                     message: 'Start'
                 });
                 // 获取 PDF 文件的二进制数据
@@ -128,10 +94,14 @@ async function saveWebpage(tab, filename, githubConfig, saveTo) {
             });
             const data = await apiResponse.json();
             console.log('GitHub response:', data);
+            
+            // 调用函数添加数据
+            addDataToList(data);
+
             if (isPdf) {
                 browser.notifications.create({
                     type: 'basic',
-                    title: 'PDF save progress',
+                    title: `PDF ${filename} save progress`,
                     message: 'Success'
                 });
             } else {

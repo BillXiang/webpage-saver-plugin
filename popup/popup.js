@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     const githubRepoInput = document.getElementById('githubRepo');
     const githubBranchInput = document.getElementById('githubBranch');
     const saveOption = document.getElementById('saveOption');
+    const openPageButton = document.getElementById('openPageButton');
 
     // 从本地存储中获取之前的 GitHub 配置信息
     const { githubConfig } = await browser.storage.local.get('githubConfig');
@@ -27,14 +28,6 @@ document.addEventListener('DOMContentLoaded', async function () {
     const { lastSaveLocation } = await browser.storage.local.get('lastSaveLocation');
     if (lastSaveLocation) {
         saveOption.value = lastSaveLocation;
-    }
-
-    // 生成文件名的函数，修改时间戳格式
-    function generateFilename(title, isPdf = false) {
-        const currentDate = new Date();
-        const timestamp = `(${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(currentDate.getDate()).padStart(2, '0')} ${String(currentDate.getHours()).padStart(2, '0')}：${String(currentDate.getMinutes()).padStart(2, '0')}：${String(currentDate.getSeconds()).padStart(2, '0')})`;
-        const fileExtension = isPdf ? '.pdf' : '.html';
-        return `${title.replace(/[\/:*?"<>|]/g, '_')}_${timestamp}${fileExtension}`;
     }
 
     saveButton.addEventListener('click', async function () {
@@ -73,6 +66,13 @@ document.addEventListener('DOMContentLoaded', async function () {
             });
             modal.style.display = "none";
         }
+    });
+
+    openPageButton.addEventListener('click', function () {
+        // 获取扩展页面的 URL
+        const pageUrl = browser.runtime.getURL('list.html');
+        // 在新标签页中打开扩展页面
+        browser.tabs.create({ url: pageUrl });
     });
 
     configureGithubButton.addEventListener('click', function () {

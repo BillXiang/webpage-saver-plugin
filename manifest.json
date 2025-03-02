@@ -21,6 +21,11 @@
         "notifications"
     ],
     "background": {
-        "scripts": ["background.js"]
+        "scripts": [
+            "github.js", 
+            "filename.js", 
+            "list.js", 
+            "summary.js",
+            "background.js"]
     }
 }
